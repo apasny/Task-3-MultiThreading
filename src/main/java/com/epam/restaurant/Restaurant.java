@@ -8,45 +8,50 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Restaurant {
 
-    private final Cashes cashes = new Cashes();
     private static Restaurant instance;
-    private static final Lock lock = new ReentrantLock();
-    private final Semaphore semaphore = new Semaphore(cashes.getCashes().size());
+    private final Cashes cashes = new Cashes();
+    private static final Lock cashLock = new ReentrantLock();
+    private static final Lock restaurantLock = new ReentrantLock();
+    private final Semaphore cashSemaphore = new Semaphore(Cashes.getCashes().size());
 
 
     private Restaurant() {
     }
 
     public static Restaurant getInstance() {
-        lock.lock();
+        Restaurant localInstance = instance;
+        restaurantLock.lock();
         try {
-            if (instance == null) {
-                instance = new Restaurant();
+            if (localInstance == null) {
+                localInstance = instance;
+                if (localInstance == null) {
+                    localInstance = new Restaurant();
+                    instance = localInstance;
+                }
             }
         } finally {
-            lock.unlock();
+            restaurantLock.unlock();
         }
-        return instance;
+        return localInstance;
     }
 
     public void serve(Client client) {
         try {
+
+            cashSemaphore.acquire();
+
             Cash cash = cashes.getCash();
 
-            semaphore.acquire();
-            lock.lock();
-
-            cash.setState(false);
+            cashLock.lock();
 
             cash.serve(client);
-            System.out.println("Client " + client.getId() + " was served by cash " + cash.getId());
-
             cash.setState(true);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            semaphore.release();
-            lock.unlock();
+            cashSemaphore.release();
+            cashLock.unlock();
         }
     }
 }

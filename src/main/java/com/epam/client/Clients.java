@@ -20,11 +20,15 @@ public class Clients {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Clients clients1 = (Clients) o;
-        return Objects.equals(clients, clients1.clients);
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        Clients clientsInstance = (Clients) object;
+        return Objects.equals(clients, clientsInstance.clients);
     }
 
     @Override
